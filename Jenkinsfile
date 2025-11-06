@@ -10,19 +10,23 @@ pipeline{
                 '''
             }
         }//para eliminar las imagenes
-
-        stage('Borrando imagenes antiguas '){
-            steps{
-                bat'''
-                IMAGES=$(docker images --filter "label=com.docker.compose.project=adj-demo" -q)
-                if [ -n "$IMAGES" ]; then
-                    docker rmi -f $IMAGES
-                else
-                    echo "No hay imagenes por eliminar"
-                fi
+        stage('Eliminando imágenes anteriores...') {
+            steps {
+                bat '''
+                    for /f "tokens=*" %%i in ('docker images --filter "label=com.docker.compose.project=demo" -q') do (
+                        docker rmi -f %%i
+                    )
+                    if errorlevel 1 (
+                        echo No hay imagenes por eliminar
+                    ) else (
+                        echo Imagenes eliminadas correctamente
+                    )
                 '''
             }
-        }//para bajar actualizaciones
+        }
+
+
+//para bajar actualizaciones
         stage('Actualizando...'){
             steps{
                 checkout scm
