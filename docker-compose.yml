@@ -1,0 +1,67 @@
+#Aqui se configuran los contenedores de Docker
+services:
+  database:
+    image: mysql:8
+    container_name: adj-database
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: adj_demo
+    ports:
+      #configuracion del puerto local:puerto del contenedor
+      - "3307:3306" 
+    networks:
+      - adj-net
+    volumes:
+      - adj-volume:/var/lib/mysql
+
+  frontend:
+    image: client:v1.0
+    build:
+      context: ./client
+      args:
+        API_HOST: localhost
+        API_PORT: 8082
+        API_BASE: /adj-api
+    container_name: adj-client 
+    ports:
+    #Port FORWARDING =mapeo de puertos
+    #PC :3000 <===================> contenedor :80
+      - "3000:80" 
+    networks: 
+      - adj-net
+      ##levantar el servicio 
+    depends_on:
+      - database
+
+  backend:
+    container_name: adj-server
+    image: server:v1.0
+    build:
+      context: ./server
+    environment:
+    #jdbc:mysql://database:3307 ==========> localhost:3306
+      SERVER_PORT: 8081
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: adj_demo
+      DB_USER: root
+      DB_PASS: root
+    ports:
+      - "8082:8081"
+    networks:
+      - adj-net
+    depends_on:
+      - frontend
+
+# Aquí se configuran las redes donde se comunican los contenedores
+#docker network create --driver bridge adj-net
+networks:
+  adj-net:
+    external: true
+
+#Aqui se configuran los volúmenes que ocupan los contenedores
+#docker volume create adj-volume
+volumes:
+  adj-volume:
+    external: true
+  
